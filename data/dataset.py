@@ -1,7 +1,6 @@
 from torch.utils.data import Dataset as TorchDataset
-
 from concern.config import Configurable, State
-
+from pprint import pprint
 
 class SliceDataset(TorchDataset, Configurable):
     dataset = State()
@@ -10,6 +9,9 @@ class SliceDataset(TorchDataset, Configurable):
 
     def __init__(self, **kwargs):
         self.load_all(**kwargs)
+
+        print("SliceDataset kwargs")
+        pprint(kwargs)
 
         if self.start is None:
             self.start = 0
