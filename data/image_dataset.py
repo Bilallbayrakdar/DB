@@ -9,6 +9,11 @@ import glob
 from concern.config import Configurable, State
 import math
 
+from PIL import Image
+from torchvision import transforms
+from RandAugment import RandAugment
+from pprint import pprint
+
 class ImageDataset(data.Dataset, Configurable):
     r'''Dataset reading from images.
     Args:
@@ -31,6 +36,13 @@ class ImageDataset(data.Dataset, Configurable):
         self.image_paths = []
         self.gt_paths = []
         self.get_all_samples()
+        self.transform = transforms.Compose([
+            transforms.Resize(size= [640, 640]),
+            transforms.ToTensor(),
+            # transforms.Normalize(mean=ICDAR_MEANS, std=ICDAR_STDS),
+        ])
+
+        self.transform.transforms.insert(0, RandAugment(4,5))
 
     def get_all_samples(self):
         for i in range(len(self.data_dir)):
@@ -81,19 +93,40 @@ class ImageDataset(data.Dataset, Configurable):
             index = index % self.num_samples
         data = {}
         image_path = self.image_paths[index]
-        img = cv2.imread(image_path, cv2.IMREAD_COLOR).astype('float32')
+        
+        # ## Default image read
+        # defImg = cv2.imread(image_path, cv2.IMREAD_COLOR).astype('float32')
+        
+        img = Image.open(image_path)
+        img = self.transform(img)
+        # print(f"tensor shape: {x.size()}")
+        
+        # x = x.cpu().numpy()
+        # print(f"array shape: {x.shape}")
+
+        # x = np.moveaxis(x, [0,1,2], [-1,0,1]) *255
+        # img = (x).astype(np.uint8)
+        # print(f"final shape: {img.shape}")
+        
         if self.is_training:
             data['filename'] = image_path
             data['data_id'] = image_path
         else:
             data['filename'] = image_path.split('/')[-1]
             data['data_id'] = image_path.split('/')[-1]
-        data['image'] = img
+        # data['image'] = defImg
         target = self.targets[index]
         data['lines'] = target
-        if self.processes is not None:
-            for data_process in self.processes:
-                data = data_process(data)
+        
+        # # Default augmentation
+        # if self.processes is not None:
+        #     for data_process in self.processes:
+        #         data = data_process(data)
+            # print(f"shape of default: {data['image'].shape}")
+            
+
+        data['image'] = img
+
         return data
 
     def __len__(self):
