@@ -95,7 +95,7 @@ class ImageDataset(data.Dataset, Configurable):
         image_path = self.image_paths[index]
         
         # ## Default image read
-        # defImg = cv2.imread(image_path, cv2.IMREAD_COLOR).astype('float32')
+        defImg = cv2.imread(image_path, cv2.IMREAD_COLOR).astype('float32')
         
         img = Image.open(image_path)
         img = self.transform(img)
@@ -114,14 +114,14 @@ class ImageDataset(data.Dataset, Configurable):
         else:
             data['filename'] = image_path.split('/')[-1]
             data['data_id'] = image_path.split('/')[-1]
-        # data['image'] = defImg
+        data['image'] = defImg
         target = self.targets[index]
         data['lines'] = target
         
-        # # Default augmentation
-        # if self.processes is not None:
-        #     for data_process in self.processes:
-        #         data = data_process(data)
+        # Default augmentation
+        if self.processes is not None:
+            for data_process in self.processes:
+                data = data_process(data)
             # print(f"shape of default: {data['image'].shape}")
             
 
