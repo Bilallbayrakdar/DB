@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from experiment import Experiment
 from data.data_loader import DistributedSampler
-
+from pprint import pprint
 
 class Trainer:
     def __init__(self, experiment: Experiment):
@@ -52,15 +52,12 @@ class Trainer:
 
         self.steps = 0
         if self.experiment.train.checkpoint:
-            self.experiment.train.checkpoint.restore_model(
-                model, self.device, self.logger)
+            self.experiment.train.checkpoint.restore_model(model, self.device, self.logger)
             epoch, iter_delta = self.experiment.train.checkpoint.restore_counter()
             self.steps = epoch * self.total + iter_delta
 
         # Init start epoch and iter
-        optimizer = self.experiment.train.scheduler.create_optimizer(
-            model.parameters())
-
+        optimizer = self.experiment.train.scheduler.create_optimizer(model.parameters())
         self.logger.report_time('Init')
 
         model.train()
@@ -170,16 +167,21 @@ class Trainer:
         for i, batch in tqdm(enumerate(data_loader), total=len(data_loader)):
             pred = model.forward(batch, training=False)
             output = self.structure.representer.represent(batch, pred)
-            raw_metric, interested = self.structure.measurer.validate_measure(
-                batch, output)
+            # raw_metric, interested = self.structure.measurer.validate_measure(batch, output)
+            x = self.structure.measurer.validate_measure(batch, output)
+            
+            # print(f"\nvalidation print type:{type(x)} len:{len(x)}")
+            
+            # raw_metric = x[0]
+            raw_metric = x
+            # interested  = x[1]
             raw_metrics.append(raw_metric)
 
             if visualize and self.structure.visualizer:
                 vis_image = self.structure.visualizer.visualize(
                     batch, output, interested)
                 vis_images.update(vis_image)
-        metrics = self.structure.measurer.gather_measure(
-            raw_metrics, self.logger)
+        metrics = self.structure.measurer.gather_measure(raw_metrics, self.logger)
         return metrics, vis_images
 
     def to_np(self, x):
