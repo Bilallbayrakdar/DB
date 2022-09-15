@@ -3,7 +3,7 @@ import cv2
 
 from .data_process import DataProcess
 from concern.config import Configurable, State
-
+import traceback
 
 # random crop algorithm similar to https://github.com/argman/EAST
 class RandomCropData(DataProcess):
@@ -102,13 +102,17 @@ class RandomCropData(DataProcess):
         h_array = np.zeros(h, dtype=np.int32)
         w_array = np.zeros(w, dtype=np.int32)
         for points in polys:
-            points = np.round(points, decimals=0).astype(np.int32)
-            minx = np.min(points[:, 0])
-            maxx = np.max(points[:, 0])
-            w_array[minx:maxx] = 1
-            miny = np.min(points[:, 1])
-            maxy = np.max(points[:, 1])
-            h_array[miny:maxy] = 1
+            try:
+                points = np.round(points, decimals=0).astype(np.int32)
+                minx = np.min(points[:, 0])
+                maxx = np.max(points[:, 0])
+                w_array[minx:maxx] = 1
+                miny = np.min(points[:, 1])
+                maxy = np.max(points[:, 1])
+                h_array[miny:maxy] = 1
+            except:
+                print(f"[EXCEPTION] points: {points}")
+                traceback.format_exc()
         # ensure the cropped area not across a text
         h_axis = np.where(h_array == 0)[0]
         w_axis = np.where(w_array == 0)[0]
@@ -134,9 +138,13 @@ class RandomCropData(DataProcess):
                 continue
             num_poly_in_rect = 0
             for poly in polys:
-                if not self.is_poly_outside_rect(poly, xmin, ymin, xmax - xmin, ymax - ymin):
-                    num_poly_in_rect += 1
-                    break
+                try:
+                    if not self.is_poly_outside_rect(poly, xmin, ymin, xmax - xmin, ymax - ymin):
+                        num_poly_in_rect += 1
+                        break
+                except:
+                    print(f"[EXCEPTION] poly:{poly}")
+                    traceback.format_exc()
 
             if num_poly_in_rect > 0:
                 return xmin, ymin, xmax - xmin, ymax - ymin

@@ -32,6 +32,11 @@ class Trainer:
     def init_model(self):
         model = self.structure.builder.build(
             self.device, self.experiment.distributed, self.experiment.local_rank)
+        
+        print(f"[INFO] Fine-Tuning Train")
+        for name,param in model.named_parameters():
+            if name.split('.')[2] != 'decoder':
+                param.requires_grad = False
         return model
 
     def update_learning_rate(self, optimizer, epoch, step):
